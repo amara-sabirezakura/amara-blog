@@ -1,0 +1,96 @@
+name: Deploy Shirone to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  repository_dispatch:
+    types: [content-updated]
+  workflow_dispatch:
+    inputs:
+      content_ref:
+        description: "Content repository ref or commit SHA"
+        required: false
+        default: ""
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+env:
+  CONTENT_REPOSITORY: amara-sabirezakura/amara-blog-data
+  CONTENT_WORKING_COPY: .content-src
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: true
+      CONTENT_DIR: .content-src
+
+    steps:
+      - name: Resolve content ref
+        id: target
+        env:
+          PAYLOAD_SHA: ${{ github.event.client_payload.sha }}
+          INPUT_REF: ${{ github.event.inputs.content_ref }}
+        run: |
+          set -euo pipefail
+          ref="${PAYLOAD_SHA:-}"
+          [ -n "$ref" ] || ref="${INPUT_REF:-}"
+          [ -n "$ref" ] || ref="main"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout source repository
+        uses: actions/checkout@v5
+
+      - name: Checkout private content repository
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ env.CONTENT_REPOSITORY }}
+          ref: ${{ steps.target.outputs.ref }}
+          path: ${{ env.CONTENT_WORKING_COPY }}
+          token: ${{ secrets.CONTENT_REPO_TOKEN }}
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Materialize content
+        run: pnpm content:sync
+
+      - name: Build site
+        run: pnpm build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
