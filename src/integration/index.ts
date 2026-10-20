@@ -361,6 +361,30 @@ export function shirones(options: ShironesOptions = {}): AstroIntegration {
 						// 必须让 Vite 接管它的 SSR 转换。
 						ssr: { noExternal: ["@material/material-color-utilities"] },
 						plugins: [
+							// Astro 7 的 environment 插件会用 vitefu 的 crawl 结果同时写
+							// `resolve.external` 与 `noExternal`，external 优先，上面两条都被它盖掉。
+							// 这里在 configResolved 把该包从 external 里摘出来，让它真的被 bundle。
+							{
+								name: "shirones:bundle-material-colors",
+								enforce: "post",
+								configResolved(config) {
+									for (const env of Object.values(config.environments ?? {})) {
+										const resolve = env?.resolve;
+										if (!resolve) continue;
+										if (Array.isArray(resolve.external)) {
+											resolve.external = resolve.external.filter(
+												(id) => id !== "@material/material-color-utilities",
+											);
+										}
+										resolve.noExternal = [
+											...(Array.isArray(resolve.noExternal)
+												? resolve.noExternal
+												: []),
+											"@material/material-color-utilities",
+										];
+									}
+								},
+							},
 							// The overlay rewriter redirects user files onto package
 							// files; inside the theme's own repository every import already
 							// resolves to the real source, so there is nothing to overlay.
