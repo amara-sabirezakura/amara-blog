@@ -1,6 +1,8 @@
 ---
 import Pagination from "@components/molecules/Pagination.astro";
 import PostPage from "@components/organisms/PostPage.astro";
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
 import type { GetStaticPaths } from "astro";
 import { postListConfig } from "@/config/postListConfig";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
@@ -17,7 +19,9 @@ const { page } = Astro.props;
 const len = page.data.length;
 ---
 
-<MainGridLayout page="home">
+<!-- 传 title 只为让标签页/og:title 与其它页面统一成「页面名 - 站点名」；
+     首页 Banner 的文案由 BannerStage 依 page="home" 走 homeText，不受影响。 -->
+<MainGridLayout page="home" title={i18n(I18nKey.home)}>
     <PostPage page={page}></PostPage>
     <Pagination class="mx-auto onload-animation" page={page} style={`animation-delay: calc(var(--content-delay) + ${(len)*50}ms)`}></Pagination>
 </MainGridLayout>
