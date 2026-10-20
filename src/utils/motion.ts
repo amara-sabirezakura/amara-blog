@@ -11,13 +11,20 @@
  * - observeLayoutShifts：短生命周期布局变化的通用 FLIP 观察器。
  */
 
-/** 是否应降级动效：系统 prefers-reduced-motion 或站点手动开关（html.motion-reduced） */
+/**
+ * 是否应降级动效。
+ *
+ * 判定顺序（前者优先）：
+ * 1. `html.motion-reduced` —— 访客在本站「显示设置」里手动开启的「减少动效」，始终生效；
+ * 2. `html.motion-forced` —— `siteConfig.forceMotion` 开启时有意忽略系统偏好；
+ * 3. 系统 / 浏览器的 `prefers-reduced-motion: reduce`。
+ */
 export function prefersReducedMotion(): boolean {
 	if (typeof window === "undefined") return false;
-	return (
-		window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ||
-		document.documentElement.classList.contains("motion-reduced")
-	);
+	const root = document.documentElement.classList;
+	if (root.contains("motion-reduced")) return true;
+	if (root.contains("motion-forced")) return false;
+	return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 }
 
 /** Wait for layout-affecting CSS transitions on an element to settle. */

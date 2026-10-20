@@ -121,9 +121,9 @@ html[data-texture-preset="sakura"] #m3e-texture-canvas {
 	}
 }
 
-/* Reduced Motion 动效降级 */
+/* Reduced Motion 动效降级（`html.motion-forced` = siteConfig.forceMotion 时忽略系统偏好） */
 @media (prefers-reduced-motion: reduce) {
-	#m3e-texture-canvas {
+	html:not(.motion-forced) #m3e-texture-canvas {
 		animation: none !important;
 	}
 }

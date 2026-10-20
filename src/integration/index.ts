@@ -354,6 +354,12 @@ export function shirones(options: ShironesOptions = {}): AstroIntegration {
 					markdown: { processor: processor as never },
 					vite: {
 						resolve: { alias: createAliases(paths) },
+						// `@material/material-color-utilities` 内部用的是**不带扩展名**的相对
+						// 导入（如 `../dynamiccolor/dynamic_scheme`）。浏览器侧由 Vite 补全，
+						// 但 SSR 阶段它默认被 external 出去、交给 Node 的 ESM 解析器直接加载，
+						// 于是报 "Cannot find module"；而 Layout 现在要在构建期算首屏调色板，
+						// 必须让 Vite 接管它的 SSR 转换。
+						ssr: { noExternal: ["@material/material-color-utilities"] },
 						plugins: [
 							// The overlay rewriter redirects user files onto package
 							// files; inside the theme's own repository every import already

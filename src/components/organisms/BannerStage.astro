@@ -1170,8 +1170,8 @@ const initialMobileBanner = page === "home";
 		animation: none
 
 	@media (prefers-reduced-motion: reduce)
-		.banner-stage__image,
-		.banner-stage__copy p[data-subtitle-state="typing"]::after
+		:global(html:not(.motion-forced)) .banner-stage__image,
+		:global(html:not(.motion-forced)) .banner-stage__copy p[data-subtitle-state="typing"]::after
 			transition: none
 			animation: none
 </style>

@@ -156,6 +156,6 @@ const waveB = buildWavePath({
 	animation: none
 
 @media (prefers-reduced-motion: reduce)
-	.banner-waves__layer
+	:global(html:not(.motion-forced)) .banner-waves__layer
 		animation: none
 </style>

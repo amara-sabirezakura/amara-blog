@@ -170,11 +170,12 @@
 
 /* 减少动态效果：手动开关（html.motion-reduced）或系统偏好（prefers-reduced-motion）
    统一将 transition/animation 时长压至 0.01ms，保留状态结果、去掉过程动效；
-   stagger 的 delay 一并归零，避免元素在延迟期间保持起始态不可见 */
+   stagger 的 delay 一并归零，避免元素在延迟期间保持起始态不可见。
+   `html.motion-forced`（siteConfig.forceMotion，默认关闭）时忽略系统偏好这一支。 */
 @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    html:not(.motion-forced) *,
+    html:not(.motion-forced) *::before,
+    html:not(.motion-forced) *::after {
         transition-duration: 0.01ms !important;
         transition-delay: 0ms !important;
         animation-duration: 0.01ms !important;

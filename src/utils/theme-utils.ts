@@ -69,6 +69,28 @@ export function isMcStyle(v: string): v is McStyle {
 	return (MC_STYLES as readonly string[]).includes(v);
 }
 
+/**
+ * 构建期解析：把 (hue, style, spec, isDark) 解析成「CSS 变量名 → 色值」映射。
+ *
+ * 与 `applyCurrentScheme()` 共用同一份 role → CSS 变量映射，但**不读 localStorage**，
+ * 因此在 SSR / 构建期调用是安全的。用途是让 Layout 把默认风格的调色板交给首屏内联脚本，
+ * 在首次绘制前就把配色落定，消除「先渲染默认色、再闪变」的 FOUC。
+ */
+export function resolveSchemeCssVars(
+	hue: number,
+	style: McStyle,
+	spec: McSpec,
+	isDark: boolean,
+): Record<string, string> {
+	const scheme = resolveScheme(hue, isDark, style, spec);
+	const vars: Record<string, string> = {};
+	for (const [role, cssVar] of Object.entries(ROLE_TO_CSS)) {
+		const value = scheme[role];
+		if (value) vars[cssVar] = value;
+	}
+	return vars;
+}
+
 export function isMcSpec(v: string): v is McSpec {
 	return (MC_SPECS as readonly string[]).includes(v);
 }
