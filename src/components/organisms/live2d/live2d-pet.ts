@@ -110,18 +110,34 @@ function isCollapsed(host: HTMLElement): boolean {
 	return host.dataset.live2dState === "collapsed";
 }
 
-/** 把小人按宿主尺寸等比缩放并贴底居中。 */
-function layoutModel(model: Live2DModelLike, stage: HTMLElement): void {
+/**
+ * 把小人摆进画框。
+ * - `full`（默认）：整个模型等比适配画框并贴底居中（全身可见）；
+ * - `bust`：按预设放大后**顶部对齐**，腰部以下落到画框外被裁掉（只显示上半身）。
+ *   `data-live2d-zoom` 是预设之上的额外倍率，换模型时用来微调取景。
+ */
+function layoutModel(
+	model: Live2DModelLike,
+	stage: HTMLElement,
+	host: HTMLElement,
+): void {
 	const width = stage.clientWidth;
 	const height = stage.clientHeight;
 	if (!width || !height) return;
 	const modelWidth = model.internalModel.width;
 	const modelHeight = model.internalModel.height;
-	const scale = Math.min(width / modelWidth, height / modelHeight);
+	const framing = host.dataset.live2dFraming === "bust" ? "bust" : "full";
+	const configuredZoom = Number.parseFloat(host.dataset.live2dZoom ?? "");
+	const zoom =
+		Number.isFinite(configuredZoom) && configuredZoom > 0 ? configuredZoom : 1;
+	const fit = Math.min(width / modelWidth, height / modelHeight);
+	// 「上半身」预设：放大到画框只框住大约「头 + 胸腹」这一段
+	const preset = framing === "bust" ? 2 : 1;
+	const scale = fit * preset * zoom;
 	model.scale.set(scale);
 	model.position.set(
 		(width - modelWidth * scale) / 2,
-		height - modelHeight * scale,
+		framing === "bust" ? 0 : height - modelHeight * scale,
 	);
 }
 
@@ -210,7 +226,7 @@ export async function mountLive2DPet(host: HTMLElement): Promise<void> {
 			internalModel.eyeBlink?.updateParameters(internalModel.coreModel, dt);
 		});
 
-		layoutModel(model, stage);
+		layoutModel(model, stage, host);
 
 		// prefers-reduced-motion：冻结动作/眨眼，只保留一帧静态姿态
 		if (prefersReducedMotion()) {
@@ -240,7 +256,7 @@ export async function mountLive2DPet(host: HTMLElement): Promise<void> {
 		if (hint) canvas.title = hint;
 		const onCanvasClick = (): void => switchExpression();
 		canvas.addEventListener("click", onCanvasClick);
-		const onResize = (): void => layoutModel(model, stage);
+		const onResize = (): void => layoutModel(model, stage, host);
 		window.addEventListener("resize", onResize, { passive: true });
 
 		controllers.set(host, { app, stage, canvas, onCanvasClick, onResize });

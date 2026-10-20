@@ -1,24 +1,26 @@
 ---
+import FAB from "@components/atoms/action/FAB.svelte";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
-import Icon from "@iconify/svelte";
 import { resolveDeviceClasses } from "@utils/fab-responsive";
 import { url } from "@utils/url-utils";
 import stylus from "stylus";
-import { resolveLive2DOptions } from "@/config";
+import { fabConfig, resolveLive2DOptions } from "@/config";
 
 /**
- * Live2D 桌面小人（桌宠）：挂在持久外壳上的可选装饰层，默认收起、点击展开。
+ * Live2D 桌面小人（桌宠）：挂在持久外壳上的可选装饰层，默认可见、可点开关收起。
  *
  * 零额外负担（见 docs/on-demand-loading.md）：
  * - L1 短路：关闭或未配置 modelPath 时不输出任何节点（SSR 零 DOM）；
  * - L2/L3 样式隔离：样式源码在此构建期编译后以 `<style is:inline>` 输出，
  *   Astro CSS 管线看不到它，关闭时 dist 里也没有这份 CSS；
- * - L4 展开后按需加载：只有当访客点开小人时才动态 import 运行时
+ * - L4 按需加载：只有「需要显示小人」时才动态 import 运行时
  *   （pixi + pixi-live2d-display + Cubism Core）并拉取模型。
  *
- * 收起态刻意「每次加载都从收起开始、不做任何持久化」：模型是 38MB 级的静态资源，
- * 访客若从没点过小人，就不该为它付带宽与内存（与评论等可选特性同一原则）。
+ * 默认可见：SSR 直接以 loading 态输出，脚本接手后立刻装载（失败则落回收起态）。
+ * 模型是 38MB 级静态资源，默认可见意味着访客一进页面就要为它付带宽与内存 ——
+ * 站点配置里关掉 `enable` 即可整体回到零成本状态。收起后不做任何持久化，
+ * 下次加载仍按「默认可见」呈现。
  */
 const options = resolveLive2DOptions();
 
@@ -26,7 +28,18 @@ if (!options) {
 	return null;
 }
 
-const { side, size, devices, credit } = options;
+const { side, size, framing, zoom, devices, credit } = options;
+
+// 触发按钮与 FAB 列对齐：FAB 的偏移量是写在 #floating-controls 行内样式上的 CSS 变量，
+// 组件外部读不到，所以这里用同一份 fabConfig 复算一遍，保证两者同列、同一间距。
+// 触发器占的是「FAB 列里返回顶部按钮正上方那一格」，因此要求该列在视口下沿只露出返回顶部
+// 一项（主题默认在 lg 及以上成立）；更窄视口若还有目录/首页等按钮，需把 devices 收到 desktop。
+const fabInlineOffset = fabConfig.offset?.right ?? "var(--m3e-space-6)";
+const fabBottomOffset = fabConfig.offset?.bottom ?? "var(--m3e-space-8)";
+// FAB 按钮直径，与 FloatingActionButton → FAB 的 size 档一一对应
+const fabButtonSize = fabConfig.size === "small" ? "2.5rem" : "3.5rem";
+// 画框横向让开 FAB 列：右边缘停在悬浮按钮左侧一个间距处，避免两者叠在一起
+const fabClearance = `calc(${fabInlineOffset} + ${fabButtonSize} + var(--m3e-space-2))`;
 
 // 站内 public 路径经 url() 补站点 base；完整远程 URL 原样使用
 const modelUrl = /^[a-z][a-z0-9+.-]*:/i.test(options.modelPath)
@@ -43,22 +56,34 @@ const live2dStylus = `/* =======================================================
 	   ========================================================================== */
 
 	.m3-live2d-pet
+		/* 整层铺满视口、全透明且不吃指针：只为给两个子元素提供「以视口为基准」的定位参考 */
 		position: fixed
-		bottom: var(--m3e-space-4)
+		inset: 0
 		z-index: 40
-		flex-direction: column
-		gap: var(--m3e-space-2)
 		pointer-events: none
 
-		&--left
-			left: var(--m3e-space-4)
-			align-items: flex-start
-
 		&--right
-			right: var(--m3e-space-4)
-			align-items: flex-end
+			.m3-live2d-pet__trigger
+				right: var(--live2d-pet-inline)
+
+			.m3-live2d-pet__panel
+				right: var(--live2d-pet-panel-inline)
+
+		&--left
+			.m3-live2d-pet__trigger
+				left: var(--live2d-pet-inline)
+
+			.m3-live2d-pet__panel
+				left: var(--live2d-pet-panel-inline)
 
 		&__panel
+			/* 纵向与开关解耦：画框中心正对浏览器窗口下沿，下半身交给窗口边缘去裁
+			   （模型仍按 full 取景整体渲染，不做任何内部裁切）。
+			   纵向：中心贴底 => 底边 = 自身高度的一半落到视口外 */
+			position: absolute
+			bottom: calc(-0.5 * var(--live2d-pet-size))
+			/* 宽度锁到画框尺寸：绝对定位下若不加约束，标注块的超长许可文案会把整列撑宽 */
+			width: var(--live2d-pet-size)
 			display: none
 			flex-direction: column
 			align-items: stretch
@@ -92,12 +117,18 @@ const live2dStylus = `/* =======================================================
 			text-align: center
 
 		&__credit
+			/* 宽度收到画框的 60%：信息块不再横铺一整排，改为贴在小人上方居中 */
+			align-self: center
+			width: 60%
 			padding: var(--m3e-space-2) var(--m3e-space-3)
 			border: 1px solid var(--outline-variant)
 			border-radius: var(--shape-corner-m)
 			background: var(--surface-container-high)
 			color: var(--on-surface)
 			font: var(--m3e-type-label-small)
+			/* 显隐只做透明度/可见性过渡：盒子本身始终占位，小人不会被顶得跳动 */
+			transition: opacity var(--m3e-duration-medium) var(--m3e-easing-standard),
+			            visibility var(--m3e-duration-medium) var(--m3e-easing-standard)
 
 			> p
 				margin: 0 0 var(--m3e-space-1)
@@ -120,29 +151,16 @@ const live2dStylus = `/* =======================================================
 				color: var(--primary)
 
 		&__trigger
-			display: inline-flex
-			align-items: center
-			justify-content: center
-			width: 2.5rem
-			height: 2.5rem
-			padding: 0
-			border: 1px solid var(--outline-variant)
-			border-radius: var(--shape-corner-full)
-			background: var(--surface-container-high)
-			color: var(--on-surface-variant)
-			cursor: pointer
+			/* 本体是 FAB 原子（与右下角悬浮按钮同款、同尺寸），
+			   这一层只负责定位：与 FAB 同列、落在「返回顶部」按钮正上方 */
+			position: absolute
+			bottom: var(--live2d-pet-trigger-bottom)
 			pointer-events: auto
-			transition: background-color var(--m3e-duration-short) var(--m3e-easing-standard),
-			            color var(--m3e-duration-short) var(--m3e-easing-standard),
-			            box-shadow var(--m3e-duration-short) var(--m3e-easing-standard)
 
-			&:hover
-				background: var(--surface-container-highest)
-				color: var(--on-surface)
-
-			&:focus-visible
-				outline: 2px solid var(--primary)
-				outline-offset: 2px
+		&__logo
+			display: block
+			width: 1.65rem
+			height: auto
 
 	.m3-live2d-pet[data-live2d-state="loading"] .m3-live2d-pet__panel,
 	.m3-live2d-pet[data-live2d-state="expanded"] .m3-live2d-pet__panel
@@ -151,9 +169,10 @@ const live2dStylus = `/* =======================================================
 	.m3-live2d-pet[data-live2d-state="loading"] .m3-live2d-pet__loading
 		display: flex
 
-	@media (prefers-reduced-motion: reduce)
-		.m3-live2d-pet__trigger
-			transition: none`;
+	/* 模型信息框：出现时先亮 3s，指针停在小人身上时保持，离开后再等 3s 收起（见脚本） */
+	.m3-live2d-pet[data-live2d-credit-state="hidden"] .m3-live2d-pet__credit
+		opacity: 0
+		visibility: hidden`;
 
 const live2dStyles = await new Promise<string>((resolve, reject) => {
 	stylus.render(live2dStylus, (error, css) => {
@@ -172,9 +191,12 @@ const live2dStyles = await new Promise<string>((resolve, reject) => {
 	]}
 	aria-label={i18n(I18nKey.live2dPet)}
 	data-live2d-model={modelUrl}
+		data-live2d-framing={framing}
+		data-live2d-zoom={String(zoom)}
 	data-live2d-hint={i18n(I18nKey.live2dHint)}
-	data-live2d-state="collapsed"
-	style={`--live2d-pet-size: ${size}`}
+	data-live2d-state="loading"
+	data-live2d-credit-state="shown"
+	style={`--live2d-pet-size: ${size}; --live2d-pet-inline: ${fabInlineOffset}; --live2d-pet-panel-inline: ${fabClearance}; --live2d-pet-trigger-bottom: calc(${fabBottomOffset} + ${fabButtonSize} + var(--m3e-space-2))`}
 >
 	<div id="live2d-pet-panel" class="m3-live2d-pet__panel" data-live2d-panel>
 		{credit && (
@@ -184,13 +206,37 @@ const live2dStyles = await new Promise<string>((resolve, reject) => {
 					{credit.title && (
 						<>
 							<dt>{i18n(I18nKey.live2dCreditModel)}</dt>
-							<dd>{credit.title}</dd>
+							<dd>
+								{credit.titleUrl ? (
+									<a
+										href={credit.titleUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										{credit.title}
+									</a>
+								) : (
+									credit.title
+								)}
+							</dd>
 						</>
 					)}
 					{credit.author && (
 						<>
 							<dt>{i18n(I18nKey.live2dCreditAuthor)}</dt>
-							<dd>{credit.author}</dd>
+							<dd>
+								{credit.authorUrl ? (
+									<a
+										href={credit.authorUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										{credit.author}
+									</a>
+								) : (
+									credit.author
+								)}
+							</dd>
 						</>
 					)}
 					{credit.license && (
@@ -223,17 +269,34 @@ const live2dStyles = await new Promise<string>((resolve, reject) => {
 		</div>
 	</div>
 
-	<button
-		type="button"
-		class="m3-live2d-pet__trigger"
-		data-live2d-trigger
-		aria-expanded="false"
-		aria-controls="live2d-pet-panel"
-		aria-label={i18n(I18nKey.live2dPet)}
-		title={i18n(I18nKey.live2dPet)}
-	>
-		<Icon icon="material-symbols:sentiment-satisfied-outline-rounded" class="text-lg" />
-	</button>
+	<!-- 触发器沿用 FAB 原子（与右下角悬浮按钮同款），外层只承担定位与点击命中；
+	     展开态语义（aria-expanded / aria-controls）由脚本挂到里面的真实 <button> 上。
+	     图标是自绘的「L2D」艺术字：等宽笔画描边、currentColor 跟随 FAB 前景色，
+	     不引外部图片、不发请求，SSR 也照样画得出来。 -->
+	<div class="m3-live2d-pet__trigger" data-live2d-trigger>
+		<FAB
+			client:load
+			variant="primary"
+			size={fabConfig.size ?? "regular"}
+			lowered={true}
+			ariaLabel={i18n(I18nKey.live2dPet)}
+		>
+			<svg
+				class="m3-live2d-pet__logo"
+				viewBox="0 0 38 14"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.9"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<path d="M2 2.5v9h5.4" />
+				<path d="M10.4 5.2a3.4 3.4 0 1 1 6.8 0c0 2.1-2.1 3.1-3.3 4.6L10.4 12.4h7" />
+				<path d="M21.6 2.5v9.9h2.3a4.95 4.95 0 0 0 0-9.9z" />
+			</svg>
+		</FAB>
+	</div>
 </aside>
 
 <style is:inline set:html={live2dStyles}></style>
@@ -251,13 +314,48 @@ const live2dStyles = await new Promise<string>((resolve, reject) => {
 		return host.querySelector<HTMLElement>("[data-live2d-trigger]");
 	}
 
+	/** 展开态语义挂在里层真正的 <button>（FAB 原子）上，外层只做定位与点击命中 */
+	function controlOf(host: HTMLElement) {
+		const trigger = triggerOf(host);
+		return trigger?.querySelector<HTMLElement>("button") ?? trigger;
+	}
+
+	function setExpanded(host: HTMLElement, expanded: boolean) {
+		controlOf(host)?.setAttribute("aria-expanded", String(expanded));
+	}
+
+	/**
+	 * 模型信息框的显隐节拍：出现时先亮 CREDIT_HOLD_MS，指针停在小人（画框或信息框）上就保持，
+	 * 离开后再等 CREDIT_HOLD_MS 收起 —— 让人看得见出处，又不长期占着版面。
+	 */
+	const CREDIT_HOLD_MS = 3000;
+	const creditTimers = new WeakMap<HTMLElement, number>();
+
+	function setCreditVisible(host: HTMLElement, visible: boolean): void {
+		host.dataset.live2dCreditState = visible ? "shown" : "hidden";
+	}
+
+	function scheduleCreditHide(host: HTMLElement): void {
+		const timer = creditTimers.get(host);
+		if (timer !== undefined) window.clearTimeout(timer);
+		creditTimers.set(
+			host,
+			window.setTimeout(() => setCreditVisible(host, false), CREDIT_HOLD_MS),
+		);
+	}
+
+	function flashCredit(host: HTMLElement): void {
+		setCreditVisible(host, true);
+		scheduleCreditHide(host);
+	}
+
 	async function expandPet(host: HTMLElement) {
 		const state = host.dataset.live2dState;
 		if (state === "expanded" || state === "loading") return;
 
 		host.dataset.live2dState = "loading";
-		const trigger = triggerOf(host);
-		trigger?.setAttribute("aria-expanded", "true");
+		setExpanded(host, true);
+		flashCredit(host);
 
 		try {
 			const { mountLive2DPet } = await loadRuntime();
@@ -269,14 +367,14 @@ const live2dStyles = await new Promise<string>((resolve, reject) => {
 		// 载入失败、或装载途中用户已收起：都回落到收起态，不留半截 UI
 		const mounted = host.dataset.live2dMounted === "true";
 		host.dataset.live2dState = mounted ? "expanded" : "collapsed";
-		trigger?.setAttribute("aria-expanded", mounted ? "true" : "false");
+		setExpanded(host, mounted);
 	}
 
 	async function collapsePet(host: HTMLElement) {
 		if (host.dataset.live2dState === "collapsed") return;
 
 		host.dataset.live2dState = "collapsed";
-		triggerOf(host)?.setAttribute("aria-expanded", "false");
+		setExpanded(host, false);
 
 		const { unmountLive2DPet } = await loadRuntime();
 		unmountLive2DPet(host);
@@ -286,10 +384,26 @@ const live2dStyles = await new Promise<string>((resolve, reject) => {
 		if (host.dataset.live2dBound === "true") return;
 		host.dataset.live2dBound = "true";
 
+		controlOf(host)?.setAttribute("aria-controls", "live2d-pet-panel");
+		setExpanded(host, host.dataset.live2dState !== "collapsed");
+
 		triggerOf(host)?.addEventListener("click", () => {
 			if (host.dataset.live2dState === "collapsed") void expandPet(host);
 			else void collapsePet(host);
 		});
+
+		// 信息框的触发条件：指针压在小人身上（画框或信息框本身）就一直显示，
+		// 也正是这样才点得到框里的两条外链 —— 不然指针一挪过去框就没了。
+		const panel = host.querySelector<HTMLElement>("[data-live2d-panel]");
+		panel?.addEventListener("mouseenter", () => {
+			const timer = creditTimers.get(host);
+			if (timer !== undefined) window.clearTimeout(timer);
+			setCreditVisible(host, true);
+		});
+		panel?.addEventListener("mouseleave", () => scheduleCreditHide(host));
+
+		// 首屏（含重新展开）先亮满一个节拍
+		flashCredit(host);
 
 		// Esc 收起：只在展开态响应（<button> 自带的 Enter/Space 已覆盖展开）
 		document.addEventListener("keydown", (event) => {
@@ -307,7 +421,29 @@ const live2dStyles = await new Promise<string>((resolve, reject) => {
 		}
 	}
 
+	/** 默认可见：SSR 以 loading 态输出，脚本接手后立即装载；装载失败就落回收起态。 */
+	async function mountVisiblePets() {
+		for (const host of document.querySelectorAll<HTMLElement>(
+			"[data-live2d-model]",
+		)) {
+			if (host.dataset.live2dState !== "loading") continue;
+			if (host.dataset.live2dMounted === "true") continue;
+
+			try {
+				const { mountLive2DPet } = await loadRuntime();
+				await mountLive2DPet(host);
+			} catch (error) {
+				console.error("[Shirone Live2D] 运行时加载失败：", error);
+			}
+
+			const mounted = host.dataset.live2dMounted === "true";
+			host.dataset.live2dState = mounted ? "expanded" : "collapsed";
+			setExpanded(host, mounted);
+		}
+	}
+
 	setupAllLive2DPets();
+	void mountVisiblePets();
 	document.addEventListener("swup:content:replace", setupAllLive2DPets);
 	document.addEventListener("swup:page:view", setupAllLive2DPets);
 </script>
