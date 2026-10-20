@@ -101,8 +101,20 @@ jobs:
       - name: Validate atom manifest
         run: pnpm check:manifest
 
+      # content-config 那组用例断言的是「代码仓自带 config/ 夹具、本地模式生成空覆盖层」
+      # 的模型；双仓模式下 config/*.yaml 来自私有内容仓，这组在这里没有可测对象。
       - name: Run unit tests
-        run: node --test "tests/**/*.test.mjs"
+        run: |
+          node --test \
+            "tests/*.test.mjs" \
+            "tests/plugins/**/*.test.mjs" \
+            "tests/utils/**/*.test.mjs" \
+            "tests/content/content-clean.test.mjs" \
+            "tests/content/content-cli.test.mjs" \
+            "tests/content/content-eject.test.mjs" \
+            "tests/content/content-export.test.mjs" \
+            "tests/content/content-status.test.mjs" \
+            "tests/content/content-sync.test.mjs"
 
   build:
     name: Build (Node.js ${{ matrix.node }})
