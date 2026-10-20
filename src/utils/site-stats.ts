@@ -5,6 +5,7 @@
  */
 import { render } from "astro:content";
 import { seriesConfig } from "../config/seriesConfig.ts";
+import { siteConfig } from "../config/siteConfig.ts";
 import {
 	getCategoryList,
 	getSeriesCatalog,
@@ -12,6 +13,7 @@ import {
 	getSortedPosts,
 	getTagList,
 } from "./content-utils";
+import { formatInstantDateInSiteTimeZone } from "./content-date.ts";
 
 export interface SiteStats {
 	posts: number;
@@ -22,13 +24,36 @@ export interface SiteStats {
 	series: number;
 	/** 全部文章 remark 字数之和 */
 	words: number;
-	/** 运行天数：以最早一篇文章的发布日为起点（无文章则 0） */
+	/**
+	 * 运行天数：配置了 `siteConfig.startDate` 时按站点时区的自然日差计算；
+	 * 未配置时回退为默认行为 —— 以最早一篇文章的发布日为起点（无文章则 0）。
+	 */
 	days: number;
 	/** 最近更新：全站最新一篇的发布/更新日（ISO 字符串；无文章为 null） */
 	lastActivity: string | null;
 }
 
 const DAY_MS = 86_400_000;
+
+/** 把某个瞬时换算成「站点时区里的日历日序号」，用于按自然日计算天数。 */
+function siteTimeZoneDayIndex(instant: Date): number {
+	const [year, month, day] = formatInstantDateInSiteTimeZone(instant)
+		.split("-")
+		.map(Number);
+	return Date.UTC(year, month - 1, day) / DAY_MS;
+}
+
+/**
+ * `siteConfig.startDate`（`YYYY-MM-DD`）对应的站点时区日历日序号。
+ * 锚点取该日中午 UTC：跨时区换算时不会把日期挪掉一天。
+ * 未配置或写得不合法时返回 `NaN`，调用方回退到默认取数逻辑。
+ */
+function resolveConfiguredStartDayIndex(): number {
+	const parsed = Date.parse(`${siteConfig.startDate ?? ""}T12:00:00Z`);
+	return Number.isNaN(parsed)
+		? Number.NaN
+		: siteTimeZoneDayIndex(new Date(parsed));
+}
 
 let cache: SiteStats | null = null;
 
@@ -59,6 +84,14 @@ export async function getSiteStats(): Promise<SiteStats> {
 		latestActivity = Math.max(latestActivity, published, updated);
 	}
 
+	// 运行天数优先用配置的起点；未配置时保持主题默认行为（自最早一篇发布日起算）
+	const configuredStartDay = resolveConfiguredStartDayIndex();
+	const days = Number.isFinite(configuredStartDay)
+		? Math.max(0, siteTimeZoneDayIndex(new Date()) - configuredStartDay)
+		: Number.isFinite(earliest)
+			? Math.max(0, Math.floor((Date.now() - earliest) / DAY_MS))
+			: 0;
+
 	cache = {
 		posts: posts.length,
 		moments: moments.length,
@@ -67,9 +100,7 @@ export async function getSiteStats(): Promise<SiteStats> {
 		/** 系列实体数（功能关闭时为 0，SiteStats 不产出该行） */
 		series: seriesCatalog?.size ?? 0,
 		words,
-		days: Number.isFinite(earliest)
-			? Math.max(0, Math.floor((Date.now() - earliest) / DAY_MS))
-			: 0,
+		days,
 		lastActivity:
 			latestActivity > 0 ? new Date(latestActivity).toISOString() : null,
 	};

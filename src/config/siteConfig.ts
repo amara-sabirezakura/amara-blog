@@ -30,6 +30,13 @@ export const siteConfig: SiteConfig = withUserConfig("site", {
 	lang: "en", // Language code, e.g. 'en', 'zh_CN', 'ja', etc.
 	// IANA time zone for precise post and moment timestamps. It is independent of lang.
 	timeZone: "Asia/Shanghai",
+	// 侧栏「运行天数」的起算日（YYYY-MM-DD）。留空则回退为默认行为：
+	// 以全站最早一篇文章的发布日为起点。只影响这一项统计。
+	startDate: "",
+	// 强制播发环境动效：true 时忽略系统 prefers-reduced-motion（默认 false，遵循系统偏好）。
+	// 覆盖全局过渡时长、横幅波浪/运镜/打字机、背景纹理；详见 types/config.ts 的字段注释。
+	// 开启是有意的无障碍取舍，站点内手动开启「减少动效」的访客仍会被尊重。
+	forceMotion: false,
 	themeColor: {
 		hue: 315, // Default hue 0-360. 站点设计默认粉紫（偏二次元）；262 紫 / 345 粉 也可选
 		fixed: false, // Hide the theme color picker for visitors

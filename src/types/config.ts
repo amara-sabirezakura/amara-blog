@@ -105,6 +105,24 @@ export type SiteConfig = {
 	/** IANA time zone used to interpret precise content timestamps. */
 	timeZone: string;
 
+	/**
+	 * 站点运行天数起点（`YYYY-MM-DD`）。侧栏统计的「运行天数」由此起算。
+	 * 留空时回退为默认行为：以全站最早一篇文章的发布日为起点。
+	 * 只影响这一项统计，不会改写任何内容的发布时间。
+	 */
+	startDate?: string;
+
+	/**
+	 * 无视系统 / 浏览器的 `prefers-reduced-motion`，强制播发环境动效（默认 `false`）。
+	 *
+	 * 覆盖范围：全局 transition/animation 时长（`main.css`）、横幅波浪、Banner 运镜与
+	 * 首页副标题打字机、背景纹理动效，以及所有经 `prefersReducedMotion()` 判定的 JS 动效。
+	 * 其余组件各自写在 `@media (prefers-reduced-motion: reduce)` 里的局部降级不在范围内。
+	 * 开启属于**有意的无障碍取舍**，请自行评估访客。
+	 * 访客在本站「显示设置」里手动开启的「减少动效」仍会被尊重。
+	 */
+	forceMotion?: boolean;
+
 	themeColor: {
 		hue: number;
 		fixed: boolean;
