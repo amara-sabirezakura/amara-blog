@@ -17,7 +17,9 @@ export default defineConfig({
 	retries: 0,
 	reporter: [["list"]],
 	use: {
-		baseURL: "http://localhost:4321",
+		// 用例里的跳转都是绝对路径（`/posts/...`），Playwright 不会把 baseURL 的
+		// 子路径补回去，所以子路径部署下的前缀由 `sitePath()` 统一添加。
+		baseURL: `http://localhost:4321${process.env.SITE_BASE ?? ""}`,
 		channel: "chrome",
 		viewport: { width: 1280, height: 900 },
 		trace: "retain-on-failure",
@@ -27,7 +29,9 @@ export default defineConfig({
 			process.platform === "win32"
 				? "pnpm.cmd astro dev --port 4321 --host"
 				: "pnpm astro dev --port 4321 --host",
-		url: "http://localhost:4321",
+		// 开发服务器会遵循 `base`，站点根路径在设了 base 后是 404，拿它做就绪探针
+		// 永远等不到；Vite 的 client 入口固定在服务器根上，是 base 无关的探针。
+		url: "http://localhost:4321/@vite/client",
 		reuseExistingServer: true,
 		timeout: 120_000,
 		env: {

@@ -77,6 +77,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Checkout content repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: amara-sabirezakura/amara-blog-data
+          path: .content-src
+          token: ${{ secrets.CONTENT_REPO_TOKEN }}
+          persist-credentials: false
+
+      # `pnpm content:sync` 生成 `src/user/user-config.ts` 与 `src/content/`；
+      # 双仓模式下这两者都不在代码仓里，缺了它们 `astro check` 会在导入阶段就挂。
+      - name: Materialize content
+        env:
+          CONTENT_DIR: .content-src
+        run: pnpm content:sync
+
       - name: Check Astro diagnostics
         run: pnpm exec astro check
 
@@ -122,11 +137,25 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Checkout content repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: amara-sabirezakura/amara-blog-data
+          path: .content-src
+          token: ${{ secrets.CONTENT_REPO_TOKEN }}
+          persist-credentials: false
+
       - name: Build production site
+        env:
+          CONTENT_DIR: .content-src
         run: pnpm build
 
+  # 上游的样式回归用例（fonts / inline-code-emphasis）打开的是 `/posts/expressive-code/`，
+  # 而这个站点把全部演示文章加密进了「隐藏区」，页面只剩密码框，用例没有可测目标。
+  # 先停用；将来有一篇未加密、带代码块的公开文章时，把两条 spec 指过去再删掉下面这行。
   styles:
     name: Style regressions
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -154,5 +183,28 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Checkout content repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: amara-sabirezakura/amara-blog-data
+          path: .content-src
+          token: ${{ secrets.CONTENT_REPO_TOKEN }}
+          persist-credentials: false
+
+      - name: Materialize content
+        env:
+          CONTENT_DIR: .content-src
+        run: pnpm content:sync
+
+      # `webServer` 拉起的是 `astro dev`，它不会跑 sync，所以内容必须先物化。
+      # 站点 base 取自内容仓的 config/site.yaml，避免在这里再手写一份。
+      - name: Resolve site base
+        id: base
+        run: |
+          node -e "const fs=require('node:fs');const m=/^base:\s*(\S+)/m.exec(fs.readFileSync('.content-src/config/site.yaml','utf8'));process.stdout.write('base='+(m?m[1].replace(/\/$/,''):''))" >> "$GITHUB_OUTPUT"
+
       - name: Run style regressions
+        env:
+          CONTENT_DIR: .content-src
+          SITE_BASE: ${{ steps.base.outputs.base }}
         run: pnpm exec playwright test tests/site/fonts.spec.ts tests/site/inline-code-emphasis.spec.ts

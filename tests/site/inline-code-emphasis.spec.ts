@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { sitePath } from "./base";
 
-const POST_PATH = "/posts/expressive-code/";
+const POST_PATH = sitePath("/posts/expressive-code/");
 
 /**
  * Inline code must keep the emphasis the author wrote.
@@ -24,7 +25,7 @@ for (const navigation of ["direct", "swup"] as const) {
 		if (navigation === "direct") {
 			await page.goto(POST_PATH, { waitUntil: "load" });
 		} else {
-			await page.goto("/");
+			await page.goto(sitePath("/"));
 			await page.waitForFunction(() => Boolean(window.swup));
 			await page.evaluate((path) => {
 				window.swup?.navigate(path);

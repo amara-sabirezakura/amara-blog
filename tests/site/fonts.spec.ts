@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { sitePath } from "./base";
 
-const CODE_POST_PATH = "/posts/expressive-code/";
+const CODE_POST_PATH = sitePath("/posts/expressive-code/");
 
 test("code blocks resolve the configured mono font family", async ({
 	page,
