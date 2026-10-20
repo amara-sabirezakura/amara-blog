@@ -63,4 +63,10 @@ export interface Live2DConfig {
 	devices?: Live2DDeviceTarget[];
 	/** 模型来源标注，全空则不渲染 */
 	credit?: Live2DCredit;
+	/**
+	 * 是否在系统「减少动效」时冻结小人（默认 false）。
+	 * 小人只会在访客点击按钮后才加载，属于用户主动发起的动效，默认不因系统偏好停下；
+	 * 需要严格遵循无障碍偏好时设为 true，此时不播 Idle、也不做视线跟随。
+	 */
+	pauseOnReducedMotion?: boolean;
 }

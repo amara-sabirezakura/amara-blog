@@ -50,6 +50,8 @@ export const live2dConfig: Live2DConfig = withUserConfig("live2d", {
 		license: "",
 		url: "",
 	},
+	/** 默认不因系统「减少动效」冻结：小人只在点击后加载，属用户主动发起的动效 */
+	pauseOnReducedMotion: false,
 });
 
 /** 归一化后的桌宠运行参数（校验已收敛在 resolveLive2DOptions）。 */
@@ -61,6 +63,7 @@ export interface ResolvedLive2DOptions {
 	zoom: number;
 	devices: Live2DDeviceTarget[];
 	credit: Live2DCredit | null;
+	pauseOnReducedMotion: boolean;
 }
 
 /**
@@ -106,5 +109,6 @@ export function resolveLive2DOptions(
 					url: credit?.url?.trim() ?? "",
 				}
 			: null,
+		pauseOnReducedMotion: config.pauseOnReducedMotion === true,
 	};
 }

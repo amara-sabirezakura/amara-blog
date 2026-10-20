@@ -51,6 +51,11 @@ interface Live2DModelLike {
 	internalModel: {
 		width: number;
 		height: number;
+		/** 原始画布尺寸：视线方向按它归一化（与上游 Live2DModel.focus 同一套换算） */
+		originalWidth: number;
+		originalHeight: number;
+		/** 视线控制器：x/y 为 [-1, 1] 的朝向分量，绝对值越大转头越多 */
+		focusController: { focus(x: number, y: number, instant?: boolean): void };
 		coreModel: {
 			getParameterValueById(id: string): number;
 		};
@@ -66,9 +71,19 @@ interface Live2DModelLike {
 	width: number;
 	height: number;
 	autoUpdate: boolean;
+	/** 推进一帧：累积内部 deltaTime，由 _render 消费（单位毫秒） */
+	update(dt: number): void;
 	/** pixi v7 专用属性：命中测试裁剪（见挂载处的说明） */
 	eventMode?: string;
 	expression(id?: string): Promise<boolean>;
+	/** 视线跟随：入参为画布坐标系（CSS px，相对 canvas 左上角） */
+	focus(x: number, y: number, instant?: boolean): void;
+	/** 全局坐标 → 模型局部坐标（与上游 focus() 内部的换算同源） */
+	toModelPosition(
+		position: { x: number; y: number },
+		result?: { x: number; y: number },
+		skipUpdate?: boolean,
+	): void;
 }
 
 interface Live2DModuleLike {
@@ -81,6 +96,9 @@ interface Live2DModuleLike {
 	};
 }
 
+/** 视线跟随幅度：1 = 上游默认（指针方向满偏），0.4 = 头部/眼睛只转到四成 */
+const FOCUS_GAIN = 0.4;
+
 /** 已挂载实例：宿主 → 控制器，用于成对卸载。 */
 const controllers = new WeakMap<HTMLElement, PetController>();
 
@@ -90,6 +108,8 @@ interface PetController {
 	canvas: HTMLCanvasElement;
 	onCanvasClick: () => void;
 	onResize: () => void;
+	/** 视线跟随的三件拆除：指针监听、离开监听、挂起的 rAF */
+	cancelFocus: () => void;
 }
 
 let cubismCorePromise: Promise<void> | null = null;
@@ -143,6 +163,7 @@ function layoutModel(
 
 /** 释放一个已挂载实例：销毁渲染器、停 rAF、清 DOM 与全局句柄。 */
 function disposeController(host: HTMLElement, controller: PetController): void {
+	controller.cancelFocus();
 	controller.canvas.removeEventListener("click", controller.onCanvasClick);
 	window.removeEventListener("resize", controller.onResize);
 	try {
@@ -228,9 +249,17 @@ export async function mountLive2DPet(host: HTMLElement): Promise<void> {
 
 		layoutModel(model, stage, host);
 
-		// prefers-reduced-motion：冻结动作/眨眼，只保留一帧静态姿态
-		if (prefersReducedMotion()) {
-			model.autoUpdate = false;
+		// 动作推进不能靠 pixi-live2d-display 的默认方式：它把帧回调挂在 Ticker.shared 上，
+		// 而本页没人驱动共享 Ticker，deltaTime 永远不涨 —— 模型能渲染但停在一帧
+		// （症状：ParamBreath 恒定、motionManager.currentMotion 永远是 null）。
+		// 这里关掉 autoUpdate，改用 Application 自己的 Ticker 手动推进（deltaMS 正是上游要的毫秒）。
+		// 只有站点显式要求时才为「减少动效」冻结：小人由访客点击后才加载，属于主动发起的动效。
+		model.autoUpdate = false;
+		const frozenForReducedMotion =
+			host.dataset.live2dPauseOnReduced === "true" && prefersReducedMotion();
+		if (!frozenForReducedMotion) {
+			// deltaMS 在后台标签页恢复后可能很大，卡一个上限避免动作瞬移
+			app.ticker.add(() => model.update(Math.min(app.ticker.deltaMS, 100)));
 		}
 
 		const expressionManager =
@@ -259,7 +288,51 @@ export async function mountLive2DPet(host: HTMLElement): Promise<void> {
 		const onResize = (): void => layoutModel(model, stage, host);
 		window.addEventListener("resize", onResize, { passive: true });
 
-		controllers.set(host, { app, stage, canvas, onCanvasClick, onResize });
+		// 视线跟随：focusController 只吃方向分量，因此不能靠上游的 model.focus() 缩放
+		// （它内部已归一化成单位向量，乘系数会被抵消）。这里照搬它的坐标换算，
+		// 再把方向分量乘 FOCUS_GAIN 来收窄转头幅度。
+		const focusPoint = new PIXI.Point();
+		const focusTo = (clientX: number, clientY: number): void => {
+			const rect = canvas.getBoundingClientRect();
+			focusPoint.set(clientX - rect.left, clientY - rect.top);
+			model.toModelPosition(focusPoint, focusPoint, true);
+			const { originalWidth, originalHeight, focusController } =
+				model.internalModel;
+			const tx = (focusPoint.x / originalWidth) * 2 - 1;
+			const ty = (focusPoint.y / originalHeight) * 2 - 1;
+			const radian = Math.atan2(ty, tx);
+			focusController.focus(
+				Math.cos(radian) * FOCUS_GAIN,
+				-Math.sin(radian) * FOCUS_GAIN,
+			);
+		};
+		let focusFrame = 0;
+		const onPointerMove = (event: PointerEvent): void => {
+			if (focusFrame) return;
+			focusFrame = requestAnimationFrame(() => {
+				focusFrame = 0;
+				focusTo(event.clientX, event.clientY);
+			});
+		};
+		const onPointerLeave = (): void => {
+			model.internalModel.focusController.focus(0, 0);
+		};
+		window.addEventListener("pointermove", onPointerMove, { passive: true });
+		document.addEventListener("pointerleave", onPointerLeave);
+		const cancelFocus = (): void => {
+			window.removeEventListener("pointermove", onPointerMove);
+			document.removeEventListener("pointerleave", onPointerLeave);
+			if (focusFrame) cancelAnimationFrame(focusFrame);
+		};
+
+		controllers.set(host, {
+			app,
+			stage,
+			canvas,
+			onCanvasClick,
+			onResize,
+			cancelFocus,
+		});
 		window.__shironeLive2D = { app, model, switchExpression };
 		host.dataset.live2dMounted = "true";
 	} catch (error) {
