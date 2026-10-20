@@ -191,3 +191,32 @@ export function setMotionPreference(reduced: boolean): void {
 	localStorage.setItem(MOTION_KEY, reduced ? "reduced" : "full");
 	applyMotionPreference(reduced);
 }
+
+const FORCED_MOTION_KEY = "mc-motion-force";
+
+/**
+ * 是否开启「强制覆写动效」：无视系统 / 浏览器传入的 `prefers-reduced-motion`。
+ *
+ * 语义：`siteConfig.forceMotion` 是**站点默认值**，只对「还没表过态」的访客生效；
+ * 访客在本机的选择（`mc-motion-force`）一旦存在就优先，站点默认不再覆盖它。
+ * 这样站点仍能给所有新访客默认播发动效，而访客关掉开关时是真的关得掉。
+ */
+export function getForcedMotionPreference(): boolean {
+	const stored = localStorage.getItem(FORCED_MOTION_KEY);
+	if (stored === null) return siteConfig.forceMotion ?? false;
+	return stored === "forced";
+}
+
+/**
+ * 同步 `html.motion-forced`。
+ * 只按传入值落类：站点默认已在 getForcedMotionPreference() 里折算过，
+ * 这里再与站点配置取「或」会让访客的关闭动作失效（开关显示关、实际仍强制）。
+ */
+export function applyForcedMotionPreference(forced: boolean): void {
+	document.documentElement.classList.toggle("motion-forced", forced);
+}
+
+export function setForcedMotionPreference(forced: boolean): void {
+	localStorage.setItem(FORCED_MOTION_KEY, forced ? "forced" : "system");
+	applyForcedMotionPreference(forced);
+}

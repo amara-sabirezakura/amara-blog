@@ -18,6 +18,8 @@ export type DisplaySettingsConfig = {
 	layoutMode?: boolean;
 	/** 是否在显示设置面板展示 Reduce motion（减少动效）切换器（默认 true） */
 	reduceMotion?: boolean;
+	/** 是否在显示设置面板展示 Force motion（强制覆写动效）切换器（默认 true） */
+	forceMotion?: boolean;
 	/** 是否在显示设置面板展示背景纹理选择器（默认 true，且受 texture.enable 控制） */
 	texture?: boolean;
 };
@@ -119,7 +121,8 @@ export type SiteConfig = {
 	 * 首页副标题打字机、背景纹理动效，以及所有经 `prefersReducedMotion()` 判定的 JS 动效。
 	 * 其余组件各自写在 `@media (prefers-reduced-motion: reduce)` 里的局部降级不在范围内。
 	 * 开启属于**有意的无障碍取舍**，请自行评估访客。
-	 * 访客在本站「显示设置」里手动开启的「减少动效」仍会被尊重。
+	 * 访客在本站「显示设置」里手动开启的「减少动效」仍会被尊重；
+	 * 显式改过「强制覆写动效」开关的访客，其选择优先于这里的默认值。
 	 */
 	forceMotion?: boolean;
 

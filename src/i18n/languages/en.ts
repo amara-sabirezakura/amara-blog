@@ -320,6 +320,7 @@ export const en: Translation = {
 	[Key.scanToRead]: "Scan to read article",
 
 	[Key.reduceMotion]: "Reduce motion",
+	[Key.forceMotion]: "Force motion",
 	[Key.wallpaperMode]: "Page background",
 	[Key.wallpaperModeBanner]: "Banner",
 	[Key.wallpaperModeNone]: "Solid",

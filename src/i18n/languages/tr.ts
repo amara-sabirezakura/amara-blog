@@ -323,6 +323,7 @@ export const tr: Translation = {
 	[Key.scanToRead]: "Makaleyi okumak için tara",
 
 	[Key.reduceMotion]: "Hareketi azalt",
+	[Key.forceMotion]: "Hareketi zorla",
 	[Key.wallpaperMode]: "Sayfa arka planı",
 	[Key.wallpaperModeBanner]: "Afiş",
 	[Key.wallpaperModeNone]: "Düz renk",

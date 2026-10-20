@@ -275,6 +275,8 @@ enum I18nKey {
 	systemMode = "systemMode",
 
 	reduceMotion = "reduceMotion",
+	/** 强制覆写动效：无视系统 prefers-reduced-motion（访客侧开关） */
+	forceMotion = "forceMotion",
 
 	wallpaperMode = "wallpaperMode",
 	wallpaperModeBanner = "wallpaperModeBanner",

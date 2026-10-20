@@ -111,7 +111,7 @@ export const siteConfig: SiteConfig = withUserConfig("site", {
 | 文件 | 职责 |
 |---|---|
 | `footerConfig.ts` | 页脚自定义 HTML 注入开关（控制是否读取并注入 `src/config/FooterConfig.html`，关闭时零开销） |
-| `siteConfig.ts` | 站点部署 URL / base 路径 / 标题标识 / 语言 / IANA 时区 / 运行天数起点（`startDate`，留空回退为最早一篇发布日）/ 强制播发动效（`forceMotion`，默认 `false` 时遵循系统 `prefers-reduced-motion`）/ HCT 主题色 / 背景纹理系统 / 显示设置浮层开关 / 横幅 / TOC 深度 / 进度条 / favicon（含 `getDefaultStyle` / `getDefaultSpec` / `resolveDisplaySettings` 回退值） |
+| `siteConfig.ts` | 站点部署 URL / base 路径 / 标题标识 / 语言 / IANA 时区 / 运行天数起点（`startDate`，留空回退为最早一篇发布日）/ 强制播发动效（`forceMotion`，站点默认值：`false` 时遵循系统 `prefers-reduced-motion`，`true` 时忽略；访客在显示设置里改过「强制覆写动效」后以其选择为准）/ HCT 主题色 / 背景纹理系统 / 显示设置浮层开关 / 横幅 / TOC 深度 / 进度条 / favicon（含 `getDefaultStyle` / `getDefaultSpec` / `resolveDisplaySettings` 回退值） |
 | `profileConfig.ts` | 博主资料：头像 / 名称 / 简介 / 社交链接 |
 | `licenseConfig.ts` | 文章版权声明 |
 | `expressiveCodeConfig.ts` | 代码块明暗主题 |

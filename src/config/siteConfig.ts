@@ -25,6 +25,7 @@ export const siteConfig: SiteConfig = withUserConfig("site", {
 		wallpaperMode: true, // 是否展示页面背景（纯色/横幅）切换
 		layoutMode: true, // 是否展示文章列表布局（列表/网格）切换
 		reduceMotion: true, // 是否展示减少动效切换
+		forceMotion: true, // 是否展示强制覆写动效切换（访客侧覆写系统偏好）
 		texture: true, // 是否展示背景纹理选择
 	},
 	lang: "en", // Language code, e.g. 'en', 'zh_CN', 'ja', etc.
@@ -36,6 +37,7 @@ export const siteConfig: SiteConfig = withUserConfig("site", {
 	// 强制播发环境动效：true 时忽略系统 prefers-reduced-motion（默认 false，遵循系统偏好）。
 	// 覆盖全局过渡时长、横幅波浪/运镜/打字机、背景纹理；详见 types/config.ts 的字段注释。
 	// 开启是有意的无障碍取舍，站点内手动开启「减少动效」的访客仍会被尊重。
+	// 语义是「站点默认值」：访客在「显示设置」改过「强制覆写动效」后，以其选择为准。
 	forceMotion: false,
 	themeColor: {
 		hue: 315, // Default hue 0-360. 站点设计默认粉紫（偏二次元）；262 紫 / 345 粉 也可选
@@ -193,6 +195,7 @@ export function resolveDisplaySettings(): {
 	wallpaperMode: boolean;
 	layoutMode: boolean;
 	reduceMotion: boolean;
+	forceMotion: boolean;
 	texture: boolean;
 } {
 	const cfg = siteConfig.displaySettings;
@@ -206,6 +209,7 @@ export function resolveDisplaySettings(): {
 		wallpaperMode: cfg?.wallpaperMode ?? true,
 		layoutMode: cfg?.layoutMode ?? true,
 		reduceMotion: cfg?.reduceMotion ?? true,
+		forceMotion: cfg?.forceMotion ?? true,
 		texture: textureOpts.enable && (cfg?.texture ?? true),
 	};
 }

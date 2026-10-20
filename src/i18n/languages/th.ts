@@ -308,6 +308,7 @@ export const th: Translation = {
 	[Key.scanToRead]: "สแกนเพื่ออ่านบทความ",
 
 	[Key.reduceMotion]: "ลดการเคลื่อนไหว",
+	[Key.forceMotion]: "บังคับให้เล่นอนิเมชัน",
 	[Key.wallpaperMode]: "พื้นหลังหน้า",
 	[Key.wallpaperModeBanner]: "แบนเนอร์",
 	[Key.wallpaperModeNone]: "สีพื้น",

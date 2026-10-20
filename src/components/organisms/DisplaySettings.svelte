@@ -25,11 +25,13 @@ import {
 	getDefaultHue,
 	getDefaultTextureOpacity,
 	getDefaultTexturePreset,
+	getForcedMotionPreference,
 	getHue,
 	getMotionPreference,
 	getStoredTextureOpacity,
 	getStoredTexturePreset,
 	getStoredWallpaperMode,
+	setForcedMotionPreference,
 	setHue,
 	setMotionPreference,
 	setTextureOpacity,
@@ -64,6 +66,7 @@ let dark = $state(
 );
 
 let motionReduced = $state(false);
+let motionForced = $state(false);
 
 // 文章列表布局（list/grid）：初始值取访客偏好，变化时存储 + FLIP 重排
 const defaultLayoutMode = defaultMode();
@@ -127,6 +130,7 @@ onMount(() => {
 		attributeFilter: ["class"],
 	});
 	motionReduced = getMotionPreference();
+	motionForced = getForcedMotionPreference();
 	return () => observer.disconnect();
 });
 
@@ -163,6 +167,13 @@ $effect(() => {
 });
 $effect(() => {
 	setMotionPreference(motionReduced);
+});
+$effect(() => {
+	// 只在开关值真的偏离当前生效值时落盘。挂载时两者相等（onMount 已按站点默认折算），
+	// 不写盘才能保住「访客尚未表态」这个状态，否则面板一打开就把它钉死了。
+	if (getForcedMotionPreference() !== motionForced) {
+		setForcedMotionPreference(motionForced);
+	}
 });
 $effect(() => {
 	if (wallpaperMode === lastAppliedWallpaperMode) return;
@@ -371,6 +382,17 @@ const stylePreviews = $derived(
                     <span class="text-sm font-bold text-[var(--on-surface)]">{i18n(I18nKey.reduceMotion)}</span>
                 </div>
                 <Switch bind:checked={motionReduced} label={i18n(I18nKey.reduceMotion)} icons />
+            </div>
+        {/if}
+        <!-- 强制覆写动效：无视系统 / 浏览器传下来的 prefers-reduced-motion。
+             站点级开关是 siteConfig.forceMotion，这里存的是访客在本机的覆写，两者取「或」。 -->
+        {#if displayConfig.forceMotion}
+            <div class="p-4 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <Icon icon="material-symbols:motion-photos-on" class="text-lg text-[var(--primary)]" />
+                    <span class="text-sm font-bold text-[var(--on-surface)]">{i18n(I18nKey.forceMotion)}</span>
+                </div>
+                <Switch bind:checked={motionForced} label={i18n(I18nKey.forceMotion)} icons />
             </div>
         {/if}
     </PanelStack>

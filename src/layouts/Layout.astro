@@ -212,7 +212,10 @@ const configuredFontRoles = getConfiguredFontRoles(resolvedFontOptions);
 			if (localStorage.getItem('mc-motion') === 'reduced') {
 				document.documentElement.classList.add('motion-reduced');
 			}
-			if (FORCE_MOTION) {
+			// 首屏就定 class，避免先按系统降级渲染一帧。优先级与会话内一致：
+			// 访客显式选择（mc-motion-force）优先，未表态才回落到站点默认 FORCE_MOTION。
+			const forcedMotionStored = localStorage.getItem('mc-motion-force');
+			if (forcedMotionStored === 'forced' || (forcedMotionStored === null && FORCE_MOTION)) {
 				document.documentElement.classList.add('motion-forced');
 			}
 			const storedWallpaperMode = localStorage.getItem('wallpaper-mode');

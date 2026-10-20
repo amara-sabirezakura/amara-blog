@@ -319,6 +319,7 @@ export const ko: Translation = {
 	[Key.scanToRead]: "QR 코드로 글 읽기",
 
 	[Key.reduceMotion]: "동작 줄이기",
+	[Key.forceMotion]: "모션 강제 적용",
 	[Key.wallpaperMode]: "페이지 배경",
 	[Key.wallpaperModeBanner]: "배너",
 	[Key.wallpaperModeNone]: "단색",
