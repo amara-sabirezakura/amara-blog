@@ -89,6 +89,7 @@ artifacts/shirone-ai-*
 /public/assets/music/
 /public/assets/projects/
 /public/assets/anime/*.webp
+/public/assets/logo/
 # Live2D 小人模型：内容仓 public/live2d/ 会随 content:sync 物化到这里。
 # 模型的单一真源在内容仓（amara-blog-data），主题仓只保留物化产物，故仍然忽略。
 /public/live2d/
