@@ -1,0 +1,4 @@
+# Keep the index and the working tree on LF regardless of core.autocrlf.
+# The index is already LF; this only stops checkouts from re-adding CRLF and
+# silences the "LF will be replaced by CRLF" warning on every diff.
+* text=auto eol=lf
