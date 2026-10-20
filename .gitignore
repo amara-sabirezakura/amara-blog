@@ -46,8 +46,8 @@ yarn.lock
 # generated font subsets
 src/assets/fonts/.subset/
 
-# generated local icon collection
-src/generated/local-icon-collections.ts
+# generated local icon collection (the generator also leaves a .tmp behind)
+/src/generated/
 *.iml
 
 # anime snapshot data & downloaded covers
@@ -90,5 +90,5 @@ artifacts/shirone-ai-*
 /public/assets/projects/
 /public/assets/anime/*.webp
 # Live2D 小人模型：内容仓 public/live2d/ 会随 content:sync 物化到这里。
-# 模型授权通常不允许再分发，所以模型文件一律不入仓（见 src/config/live2dConfig.ts）。
+# 模型的单一真源在内容仓（amara-blog-data），主题仓只保留物化产物，故仍然忽略。
 /public/live2d/
