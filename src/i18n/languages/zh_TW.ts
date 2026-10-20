@@ -173,6 +173,15 @@ export const zh_TW: Translation = {
 	[Key.commentsLoadFailed]: "評論載入失敗",
 	[Key.commentsRequiresJavaScript]: "評論區需要啟用 JavaScript 才能顯示",
 
+	[Key.live2dPet]: "Live2D 桌面小人",
+	[Key.live2dCredit]: "模型來源",
+	[Key.live2dCreditModel]: "模型",
+	[Key.live2dCreditAuthor]: "作者",
+	[Key.live2dCreditLicense]: "授權",
+	[Key.live2dCreditSource]: "來源",
+	[Key.live2dHint]: "點擊角色切換表情",
+
+	[Key.live2dLoading]: "正在載入小人…",
 	[Key.untitled]: "無標題",
 	[Key.uncategorized]: "未分類",
 	[Key.noTags]: "無標籤",

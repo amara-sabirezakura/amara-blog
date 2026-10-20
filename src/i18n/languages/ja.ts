@@ -180,6 +180,15 @@ export const ja: Translation = {
 	[Key.commentsRequiresJavaScript]:
 		"コメントを表示するには JavaScript を有効にしてください",
 
+	[Key.live2dPet]: "Live2D デスクトップマスコット",
+	[Key.live2dCredit]: "モデルのクレジット",
+	[Key.live2dCreditModel]: "モデル",
+	[Key.live2dCreditAuthor]: "作者",
+	[Key.live2dCreditLicense]: "ライセンス",
+	[Key.live2dCreditSource]: "出典",
+	[Key.live2dHint]: "キャラクターをクリックすると表情が切り替わります",
+
+	[Key.live2dLoading]: "マスコットを読み込み中…",
 	[Key.untitled]: "タイトルなし",
 	[Key.uncategorized]: "カテゴリなし",
 	[Key.noTags]: "タグなし",

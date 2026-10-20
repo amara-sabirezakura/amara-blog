@@ -183,6 +183,15 @@ export const tr: Translation = {
 	[Key.commentsRequiresJavaScript]:
 		"Yorumların gösterilmesi için JavaScript etkinleştirilmelidir",
 
+	[Key.live2dPet]: "Live2D maskotu",
+	[Key.live2dCredit]: "Model künyesi",
+	[Key.live2dCreditModel]: "Model",
+	[Key.live2dCreditAuthor]: "Yazar",
+	[Key.live2dCreditLicense]: "Lisans",
+	[Key.live2dCreditSource]: "Kaynak",
+	[Key.live2dHint]: "İfadeyi değiştirmek için karaktere tıklayın",
+
+	[Key.live2dLoading]: "Karakter yükleniyor…",
 	[Key.untitled]: "Başlıksız",
 	[Key.uncategorized]: "Katagorisiz",
 	[Key.noTags]: "Tag Bulunamadı",

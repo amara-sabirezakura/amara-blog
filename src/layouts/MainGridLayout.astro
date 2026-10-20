@@ -4,6 +4,7 @@ import CategoryBar from "@components/organisms/CategoryBar.astro";
 import ContextMenu from "@components/organisms/ContextMenu.svelte";
 import FloatingControls from "@components/organisms/FloatingControls.astro";
 import Footer from "@components/organisms/Footer.astro";
+import Live2DPet from "@components/organisms/Live2DPet.astro";
 import RouteProgress from "@components/organisms/RouteProgress.svelte";
 import SideBar from "@components/organisms/SideBar.astro";
 import SiteNavigationDrawer from "@components/organisms/SiteNavigationDrawer.svelte";
@@ -117,6 +118,8 @@ const mainContentClasses = generateMainContentClasses(sidebarResponsive);
         </div>
 
         <FloatingControls page={page} headings={headings} hasComments={hasComments} />
+        <!-- Live2D 桌宠：持久外壳装饰层，位于 #swup-container 之外，站内导航不重建 -->
+        <Live2DPet />
         <RouteProgress client:load />
     </div>
 </div>

@@ -185,6 +185,15 @@ export const id: Translation = {
 	[Key.commentsRequiresJavaScript]:
 		"Komentar memerlukan JavaScript untuk ditampilkan",
 
+	[Key.live2dPet]: "Maskot Live2D",
+	[Key.live2dCredit]: "Kredit model",
+	[Key.live2dCreditModel]: "Model",
+	[Key.live2dCreditAuthor]: "Pembuat",
+	[Key.live2dCreditLicense]: "Lisensi",
+	[Key.live2dCreditSource]: "Sumber",
+	[Key.live2dHint]: "Klik karakter untuk mengganti ekspresi",
+
+	[Key.live2dLoading]: "Memuat karakter…",
 	[Key.untitled]: "Tanpa Judul",
 	[Key.uncategorized]: "Tanpa Kategori",
 	[Key.noTags]: "Tanpa Tag",

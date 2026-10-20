@@ -172,6 +172,23 @@ enum I18nKey {
 	commentsLoadFailed = "commentsLoadFailed",
 	commentsRequiresJavaScript = "commentsRequiresJavaScript",
 
+	/** Live2D 桌面小人：区域无障碍名称 */
+	live2dPet = "live2dPet",
+	/** Live2D 桌面小人：模型来源标注标题 */
+	live2dCredit = "live2dCredit",
+	/** Live2D 桌面小人：模型名称标签 */
+	live2dCreditModel = "live2dCreditModel",
+	/** Live2D 桌面小人：模型作者标签 */
+	live2dCreditAuthor = "live2dCreditAuthor",
+	/** Live2D 桌面小人：模型许可标签 */
+	live2dCreditLicense = "live2dCreditLicense",
+	/** Live2D 桌面小人：模型来源链接标签 */
+	live2dCreditSource = "live2dCreditSource",
+	/** Live2D 桌面小人：切换表情的提示文案（画布 title） */
+	live2dHint = "live2dHint",
+	/** Live2D 桌面小人：展开时加载模型的提示文案 */
+	live2dLoading = "live2dLoading",
+
 	untitled = "untitled",
 	uncategorized = "uncategorized",
 	noTags = "noTags",

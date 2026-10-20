@@ -180,6 +180,15 @@ export const ko: Translation = {
 	[Key.commentsRequiresJavaScript]:
 		"댓글을 표시하려면 JavaScript를 활성화해야 합니다",
 
+	[Key.live2dPet]: "Live2D 데스크톱 펫",
+	[Key.live2dCredit]: "모델 출처",
+	[Key.live2dCreditModel]: "모델",
+	[Key.live2dCreditAuthor]: "제작자",
+	[Key.live2dCreditLicense]: "라이선스",
+	[Key.live2dCreditSource]: "출처",
+	[Key.live2dHint]: "캐릭터를 클릭하면 표정이 바뀝니다",
+
+	[Key.live2dLoading]: "캐릭터를 불러오는 중…",
 	[Key.untitled]: "제목 없음",
 	[Key.uncategorized]: "분류되지 않음",
 	[Key.noTags]: "태그 없음",

@@ -172,6 +172,15 @@ export const th: Translation = {
 	[Key.commentsRequiresJavaScript]:
 		"ความคิดเห็นจำเป็นต้องเปิดใช้งาน JavaScript เพื่อแสดงผล",
 
+	[Key.live2dPet]: "มาสคอต Live2D",
+	[Key.live2dCredit]: "เครดิตโมเดล",
+	[Key.live2dCreditModel]: "โมเดล",
+	[Key.live2dCreditAuthor]: "ผู้สร้าง",
+	[Key.live2dCreditLicense]: "สัญญาอนุญาต",
+	[Key.live2dCreditSource]: "แหล่งที่มา",
+	[Key.live2dHint]: "คลิกตัวละครเพื่อเปลี่ยนสีหน้า",
+
+	[Key.live2dLoading]: "กำลังโหลดตัวละคร…",
 	[Key.untitled]: "ไม่ได้ตั้งชื่อ",
 	[Key.uncategorized]: "ไม่ได้จัดหมวดหมู่",
 	[Key.noTags]: "ไม่มีป้ายกำกับ",

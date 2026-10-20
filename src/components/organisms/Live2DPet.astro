@@ -1,0 +1,313 @@
+---
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import Icon from "@iconify/svelte";
+import { resolveDeviceClasses } from "@utils/fab-responsive";
+import { url } from "@utils/url-utils";
+import stylus from "stylus";
+import { resolveLive2DOptions } from "@/config";
+
+/**
+ * Live2D 桌面小人（桌宠）：挂在持久外壳上的可选装饰层，默认收起、点击展开。
+ *
+ * 零额外负担（见 docs/on-demand-loading.md）：
+ * - L1 短路：关闭或未配置 modelPath 时不输出任何节点（SSR 零 DOM）；
+ * - L2/L3 样式隔离：样式源码在此构建期编译后以 `<style is:inline>` 输出，
+ *   Astro CSS 管线看不到它，关闭时 dist 里也没有这份 CSS；
+ * - L4 展开后按需加载：只有当访客点开小人时才动态 import 运行时
+ *   （pixi + pixi-live2d-display + Cubism Core）并拉取模型。
+ *
+ * 收起态刻意「每次加载都从收起开始、不做任何持久化」：模型是 38MB 级的静态资源，
+ * 访客若从没点过小人，就不该为它付带宽与内存（与评论等可选特性同一原则）。
+ */
+const options = resolveLive2DOptions();
+
+if (!options) {
+	return null;
+}
+
+const { side, size, devices, credit } = options;
+
+// 站内 public 路径经 url() 补站点 base；完整远程 URL 原样使用
+const modelUrl = /^[a-z][a-z0-9+.-]*:/i.test(options.modelPath)
+	? options.modelPath
+	: url(options.modelPath);
+
+const live2dStylus = `/* ==========================================================================
+	   Live2D 桌面小人（最小装饰层，默认收起）
+	   令牌规范：全部消费 M3E 语义令牌，跟随明暗与主题色
+	   注意：本样式以 <style is:inline> 输出（不进入 Astro CSS 管线，见
+	   docs/on-demand-loading.md §L3），因此根元素刻意不写 display ——
+	   响应式显隐一律交给 Tailwind 类（内联样式无层，会压过 @layer utilities）。
+	   展开/收起状态一律由 [data-live2d-state] 驱动，样式只负责显隐，不参与状态机。
+	   ========================================================================== */
+
+	.m3-live2d-pet
+		position: fixed
+		bottom: var(--m3e-space-4)
+		z-index: 40
+		flex-direction: column
+		gap: var(--m3e-space-2)
+		pointer-events: none
+
+		&--left
+			left: var(--m3e-space-4)
+			align-items: flex-start
+
+		&--right
+			right: var(--m3e-space-4)
+			align-items: flex-end
+
+		&__panel
+			display: none
+			flex-direction: column
+			align-items: stretch
+			gap: var(--m3e-space-2)
+			pointer-events: auto
+
+		&__stage
+			position: relative
+			width: var(--live2d-pet-size)
+			height: var(--live2d-pet-size)
+			pointer-events: auto
+			cursor: pointer
+
+			canvas
+				display: block
+				width: 100%
+				height: 100%
+
+		&__loading
+			position: absolute
+			inset: 0
+			display: none
+			flex-direction: column
+			align-items: center
+			justify-content: center
+			gap: var(--m3e-space-2)
+			border-radius: var(--shape-corner-l)
+			background: var(--surface-container-high)
+			color: var(--on-surface-variant)
+			font: var(--m3e-type-label-small)
+			text-align: center
+
+		&__credit
+			padding: var(--m3e-space-2) var(--m3e-space-3)
+			border: 1px solid var(--outline-variant)
+			border-radius: var(--shape-corner-m)
+			background: var(--surface-container-high)
+			color: var(--on-surface)
+			font: var(--m3e-type-label-small)
+
+			> p
+				margin: 0 0 var(--m3e-space-1)
+				color: var(--on-surface-variant)
+
+			dl
+				display: grid
+				grid-template-columns: auto minmax(0, 1fr)
+				gap: var(--m3e-space-1) var(--m3e-space-2)
+				margin: 0
+
+			dt
+				color: var(--on-surface-variant)
+
+			dd
+				margin: 0
+				overflow-wrap: anywhere
+
+			a
+				color: var(--primary)
+
+		&__trigger
+			display: inline-flex
+			align-items: center
+			justify-content: center
+			width: 2.5rem
+			height: 2.5rem
+			padding: 0
+			border: 1px solid var(--outline-variant)
+			border-radius: var(--shape-corner-full)
+			background: var(--surface-container-high)
+			color: var(--on-surface-variant)
+			cursor: pointer
+			pointer-events: auto
+			transition: background-color var(--m3e-duration-short) var(--m3e-easing-standard),
+			            color var(--m3e-duration-short) var(--m3e-easing-standard),
+			            box-shadow var(--m3e-duration-short) var(--m3e-easing-standard)
+
+			&:hover
+				background: var(--surface-container-highest)
+				color: var(--on-surface)
+
+			&:focus-visible
+				outline: 2px solid var(--primary)
+				outline-offset: 2px
+
+	.m3-live2d-pet[data-live2d-state="loading"] .m3-live2d-pet__panel,
+	.m3-live2d-pet[data-live2d-state="expanded"] .m3-live2d-pet__panel
+		display: flex
+
+	.m3-live2d-pet[data-live2d-state="loading"] .m3-live2d-pet__loading
+		display: flex
+
+	@media (prefers-reduced-motion: reduce)
+		.m3-live2d-pet__trigger
+			transition: none`;
+
+const live2dStyles = await new Promise<string>((resolve, reject) => {
+	stylus.render(live2dStylus, (error, css) => {
+		if (error) reject(error);
+		else resolve(css);
+	});
+});
+---
+
+<aside
+	id="live2d-pet"
+	class:list={[
+		"m3-live2d-pet",
+		`m3-live2d-pet--${side}`,
+		resolveDeviceClasses(devices),
+	]}
+	aria-label={i18n(I18nKey.live2dPet)}
+	data-live2d-model={modelUrl}
+	data-live2d-hint={i18n(I18nKey.live2dHint)}
+	data-live2d-state="collapsed"
+	style={`--live2d-pet-size: ${size}`}
+>
+	<div id="live2d-pet-panel" class="m3-live2d-pet__panel" data-live2d-panel>
+		{credit && (
+			<div class="m3-live2d-pet__credit" data-live2d-credit>
+				<p>{i18n(I18nKey.live2dCredit)}</p>
+				<dl>
+					{credit.title && (
+						<>
+							<dt>{i18n(I18nKey.live2dCreditModel)}</dt>
+							<dd>{credit.title}</dd>
+						</>
+					)}
+					{credit.author && (
+						<>
+							<dt>{i18n(I18nKey.live2dCreditAuthor)}</dt>
+							<dd>{credit.author}</dd>
+						</>
+					)}
+					{credit.license && (
+						<>
+							<dt>{i18n(I18nKey.live2dCreditLicense)}</dt>
+							<dd>{credit.license}</dd>
+						</>
+					)}
+					{credit.url && (
+						<>
+							<dt>{i18n(I18nKey.live2dCreditSource)}</dt>
+							<dd>
+								<a href={credit.url} target="_blank" rel="noopener noreferrer">
+									{credit.url}
+								</a>
+							</dd>
+						</>
+					)}
+				</dl>
+			</div>
+		)}
+
+		<div class="m3-live2d-pet__stage" data-live2d-stage>
+			<div class="m3-live2d-pet__loading" role="status" aria-live="polite">
+				<!-- 加载指示由运行时按需挂载（LoadingIndicator 原子），此处只留挂载点：
+				     收起态因此连指示器的 JS 都不带，也不会留一个隐藏的空转 rAF 循环 -->
+				<span data-live2d-spinner></span>
+				<span>{i18n(I18nKey.live2dLoading)}</span>
+			</div>
+		</div>
+	</div>
+
+	<button
+		type="button"
+		class="m3-live2d-pet__trigger"
+		data-live2d-trigger
+		aria-expanded="false"
+		aria-controls="live2d-pet-panel"
+		aria-label={i18n(I18nKey.live2dPet)}
+		title={i18n(I18nKey.live2dPet)}
+	>
+		<Icon icon="material-symbols:sentiment-satisfied-outline-rounded" class="text-lg" />
+	</button>
+</aside>
+
+<style is:inline set:html={live2dStyles}></style>
+
+<script>
+	let runtimePromise: Promise<typeof import("@components/organisms/live2d/live2d-pet")> | null =
+		null;
+
+	function loadRuntime() {
+		runtimePromise ??= import("@components/organisms/live2d/live2d-pet");
+		return runtimePromise;
+	}
+
+	function triggerOf(host: HTMLElement) {
+		return host.querySelector<HTMLElement>("[data-live2d-trigger]");
+	}
+
+	async function expandPet(host: HTMLElement) {
+		const state = host.dataset.live2dState;
+		if (state === "expanded" || state === "loading") return;
+
+		host.dataset.live2dState = "loading";
+		const trigger = triggerOf(host);
+		trigger?.setAttribute("aria-expanded", "true");
+
+		try {
+			const { mountLive2DPet } = await loadRuntime();
+			await mountLive2DPet(host);
+		} catch (error) {
+			console.error("[Shirone Live2D] 运行时加载失败：", error);
+		}
+
+		// 载入失败、或装载途中用户已收起：都回落到收起态，不留半截 UI
+		const mounted = host.dataset.live2dMounted === "true";
+		host.dataset.live2dState = mounted ? "expanded" : "collapsed";
+		trigger?.setAttribute("aria-expanded", mounted ? "true" : "false");
+	}
+
+	async function collapsePet(host: HTMLElement) {
+		if (host.dataset.live2dState === "collapsed") return;
+
+		host.dataset.live2dState = "collapsed";
+		triggerOf(host)?.setAttribute("aria-expanded", "false");
+
+		const { unmountLive2DPet } = await loadRuntime();
+		unmountLive2DPet(host);
+	}
+
+	function bindPet(host: HTMLElement) {
+		if (host.dataset.live2dBound === "true") return;
+		host.dataset.live2dBound = "true";
+
+		triggerOf(host)?.addEventListener("click", () => {
+			if (host.dataset.live2dState === "collapsed") void expandPet(host);
+			else void collapsePet(host);
+		});
+
+		// Esc 收起：只在展开态响应（<button> 自带的 Enter/Space 已覆盖展开）
+		document.addEventListener("keydown", (event) => {
+			if (event.key !== "Escape") return;
+			if (host.dataset.live2dState === "collapsed") return;
+			void collapsePet(host);
+		});
+	}
+
+	function setupAllLive2DPets() {
+		for (const host of document.querySelectorAll<HTMLElement>(
+			"[data-live2d-model]",
+		)) {
+			bindPet(host);
+		}
+	}
+
+	setupAllLive2DPets();
+	document.addEventListener("swup:content:replace", setupAllLive2DPets);
+	document.addEventListener("swup:page:view", setupAllLive2DPets);
+</script>

@@ -183,6 +183,15 @@ export const vi: Translation = {
 	[Key.commentsLoadFailed]: "Không thể tải bình luận",
 	[Key.commentsRequiresJavaScript]: "Bình luận yêu cầu JavaScript để hiển thị",
 
+	[Key.live2dPet]: "Linh vật Live2D",
+	[Key.live2dCredit]: "Nguồn mô hình",
+	[Key.live2dCreditModel]: "Mô hình",
+	[Key.live2dCreditAuthor]: "Tác giả",
+	[Key.live2dCreditLicense]: "Giấy phép",
+	[Key.live2dCreditSource]: "Nguồn",
+	[Key.live2dHint]: "Nhấp vào nhân vật để đổi biểu cảm",
+
+	[Key.live2dLoading]: "Đang tải nhân vật…",
 	[Key.untitled]: "Không tiêu đề",
 	[Key.uncategorized]: "Chưa phân loại",
 	[Key.noTags]: "Chưa có thẻ",

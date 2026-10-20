@@ -159,6 +159,12 @@ export const CONFIG_DOMAINS = Object.freeze([
 		module: "@/types/llmsConfig",
 	},
 	{
+		key: "live2d",
+		file: "live2d",
+		type: "Live2DConfig",
+		module: "@/types/live2dConfig",
+	},
+	{
 		key: "umami",
 		file: "umami",
 		type: "UmamiConfig",

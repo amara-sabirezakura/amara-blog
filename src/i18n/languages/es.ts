@@ -183,6 +183,15 @@ export const es: Translation = {
 	[Key.commentsRequiresJavaScript]:
 		"Los comentarios requieren JavaScript para mostrarse",
 
+	[Key.live2dPet]: "Mascota Live2D",
+	[Key.live2dCredit]: "Créditos del modelo",
+	[Key.live2dCreditModel]: "Modelo",
+	[Key.live2dCreditAuthor]: "Autor",
+	[Key.live2dCreditLicense]: "Licencia",
+	[Key.live2dCreditSource]: "Fuente",
+	[Key.live2dHint]: "Haz clic en el personaje para cambiar de expresión",
+
+	[Key.live2dLoading]: "Cargando el personaje…",
 	[Key.untitled]: "Sin título",
 	[Key.uncategorized]: "Sin categoría",
 	[Key.noTags]: "Sin etiquetas",

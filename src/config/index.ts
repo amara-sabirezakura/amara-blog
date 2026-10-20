@@ -48,6 +48,11 @@ export {
 	resolveImageBloomOptions,
 } from "./imageBloomConfig";
 export { licenseConfig } from "./licenseConfig";
+export {
+	live2dConfig,
+	type ResolvedLive2DOptions,
+	resolveLive2DOptions,
+} from "./live2dConfig";
 export { llmsConfig } from "./llmsConfig";
 export { momentsConfig } from "./momentsConfig";
 export {

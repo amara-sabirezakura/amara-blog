@@ -89,3 +89,6 @@ artifacts/shirone-ai-*
 /public/assets/music/
 /public/assets/projects/
 /public/assets/anime/*.webp
+# Live2D 小人模型：内容仓 public/live2d/ 会随 content:sync 物化到这里。
+# 模型授权通常不允许再分发，所以模型文件一律不入仓（见 src/config/live2dConfig.ts）。
+/public/live2d/
