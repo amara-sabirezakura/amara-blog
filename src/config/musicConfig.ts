@@ -7,6 +7,7 @@ import type {
 	TrackDescriptor,
 } from "../types/musicConfig.ts";
 import { withUserConfig } from "../utils/config-overlay.ts";
+import { url } from "../utils/url-utils.ts";
 
 /**
  * 侧栏音乐配置单一真源。
@@ -94,13 +95,23 @@ function normalizeMediaSource(value: string): string | null {
 	return `/${source.replace(/^\.\//, "")}`;
 }
 
+/**
+ * 站内绝对路径的音频要给站点 base 补上。部署在子路径（如 `/amara-blog`）时，
+ * 直接输出 `/assets/...` 会让浏览器请求域名根下而 404，播放器于是整串跳曲。
+ * 协议相对 / 绝对 URL 原样返回，外链音频不受影响。
+ */
+function withSiteBase(source: string | null): string | null {
+	if (!source || !source.startsWith("/")) return source;
+	return url(source);
+}
+
 function normalizeTrack(
 	track: TrackDescriptor,
 	usedIds: Set<string>,
 ): TrackDescriptor | null {
 	const id = track.id.trim();
 	const title = track.title.trim();
-	const source = normalizeMediaSource(track.source);
+	const source = withSiteBase(normalizeMediaSource(track.source));
 	if (!id || !title || !source || usedIds.has(id)) return null;
 
 	usedIds.add(id);
