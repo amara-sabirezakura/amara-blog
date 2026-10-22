@@ -2,6 +2,11 @@ version: 2
 updates:
   - package-ecosystem: "npm"
     directory: "/"
+    # 版本更新暂停（官方文档：把该选项设为 0 即停止为这个生态开版本升级 PR）。
+    # 理由：本仓是跟随 upstream 的 fork，依赖组合与 src/integration/ 强耦合，
+    # 跟着 upstream 一起升更稳；需要某个包的修复时再手工处理。
+    # 要恢复自动更新，删掉下一行即可。
+    open-pull-requests-limit: 0
     schedule:
       interval: "daily"
     groups:
