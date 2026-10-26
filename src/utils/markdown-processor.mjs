@@ -49,6 +49,7 @@ import { MarkerComponent } from "../plugins/rehype-component-marker.mjs";
 import { SpoilerComponent } from "../plugins/rehype-component-spoiler.mjs";
 import { YouTubeComponent } from "../plugins/rehype-component-youtube.mjs";
 import { rehypeMarkdownImages } from "../plugins/rehype-markdown-images.mjs";
+import { rehypeInternalLinks } from "../plugins/rehype-internal-links.mjs";
 import { rehypeResponsiveTables } from "../plugins/rehype-responsive-tables.mjs";
 import { parseDirectiveNode } from "../plugins/remark-directive-rehype.js";
 import { remarkEscapeNumericColons } from "../plugins/remark-escape-numeric-colons.mjs";
@@ -165,6 +166,9 @@ export const siteRehypePlugins = [
 			},
 		},
 	],
+	// 站内链接 scheme 改写（ama:// → 带站点 base 的路径）：只读 a[href]、只写回同一个
+	// href，不新增节点；位于组件渲染之后、图片增强之前，后续插件的输入结构不变
+	rehypeInternalLinks,
 	// 图片通用增强（w-N% 宽度 / 标题图注 / 惰性加载）：殿后执行，
 	// 确保 :::grid 等组件已渲染出跳过类名
 	[
@@ -186,3 +190,9 @@ export const siteMarkdownProcessor = unified({
 	remarkPlugins: siteRemarkPlugins,
 	rehypePlugins: siteRehypePlugins,
 });
+
+/**
+ * 暴露给 integration 的 base 注入口：Node 上下文没有 `import.meta.env.BASE_URL`，
+ * 由 `src/integration` 在配置阶段用站点 base 写入。
+ */
+export { setInternalLinkBase } from "../plugins/rehype-internal-links.mjs";

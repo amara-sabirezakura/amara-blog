@@ -1020,6 +1020,57 @@
 			]
 		},
 		{
+			"id": "internal-link",
+			"name": "Internal Site Link",
+			"status": "stable",
+			"category": "inline-extension",
+			"source": "shirone",
+			"summary": "用 `ama://` 前缀声明站内链接，构建期改写为带站点 base 的路径，子路径部署也不会 404。",
+			"forms": [
+				{
+					"kind": "inline-link",
+					"pattern": "[text](ama://path)",
+					"example": "见 [第二篇](ama://posts/second-blog/) 与 [归档](ama://archive/)。"
+				}
+			],
+			"attributes": [
+				{
+					"name": "scheme",
+					"required": true,
+					"values": "ama（写作 ama:、ama:/、ama:// 均可）",
+					"default": "ama"
+				},
+				{
+					"name": "path",
+					"required": true,
+					"values": "站内路径，可含 #锚点 与 ?查询",
+					"default": null
+				}
+			],
+			"implementation": [
+				"src/plugins/rehype-internal-links.mjs"
+			],
+			"registeredIn": "src/utils/markdown-processor.mjs",
+			"styles": [],
+			"runtime": {
+				"mode": "none",
+				"modules": [],
+				"network": []
+			},
+			"docs": [
+				"docs/markdown-extensions.md"
+			],
+			"tests": [
+				"tests/plugins/markdown/inline/internal-links.test.mjs"
+			],
+			"notes": [
+				"只改写 `a[href]` 中以 `ama:` 开头的值；普通链接、图片和裸锚点保持作者原文。",
+				"base 优先取 Vite 的 `import.meta.env.BASE_URL`；Node 侧（integration 加载的处理链）由配置阶段注入同一值。",
+				"纯构建期字符串改写：不增加 CSS、客户端脚本、hydration 或网络请求。",
+				"`ama://` 只表示「站内」，不校验目标是否存在；路径写错仍然会 404。"
+			]
+		},
+		{
 			"id": "marker",
 			"name": "Marker Highlight",
 			"status": "stable",

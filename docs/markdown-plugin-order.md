@@ -51,6 +51,7 @@
 | 标题 ID | `rehypeSlug` | `rehypeAutolinkHeadings` 之前 | 先建立稳定标题 ID |
 | 容器预处理 | `rehypeCollapseGroups`、`rehypeOptionGroupIds` | 对应组件渲染之前 | 为折叠组和选项组写入稳定属性 |
 | 组件渲染 | `rehypeComponents` | 图片和表格后处理之前 | 将 directive AST 渲染为稳定组件 DOM |
+| 站内链接 | `rehypeInternalLinks` | `rehypeComponents` 之后 | 把 `ama:` 方案的 `a[href]` 改写为带站点 `base` 的路径；只读 `a[href]`、只写回 `href` |
 | 标题链接 | `rehypeAutolinkHeadings` | `rehypeSlug` 之后 | 根据已存在的标题 ID 添加锚点 |
 | 图片增强 | `rehypeMarkdownImages` | `rehypeComponents` 之后 | 增强普通图片并跳过已渲染组件内部图片 |
 | 表格包装 | `rehypeResponsiveTables` | Rehype 最后 | 为最终 HTML 中的表格添加滚动容器 |
@@ -59,6 +60,7 @@
 
 - 不得把 `rehypeMarkdownImages` 提前到 `rehypeComponents` 之前，否则它无法可靠识别 `image-grid`、Mermaid 等组件的跳过边界。
 - 不得把 `rehypeAutolinkHeadings` 提前到 `rehypeSlug` 之前，否则锚点可能引用不存在或不稳定的 ID。
+- `rehypeInternalLinks` 只能处理普通作者链接：只认 `a[href]` 上的 `ama:` 方案，不得改写组件内部自己生成的 URL（视频封面、卡片链接等）。
 - 不得在 `rehypeComponents` 之后重新运行 directive 解析器或组件渲染器。
 - 只允许最后的表格包装器修改表格外层结构；组件内部表格必须通过明确的跳过条件保持原样。
 

@@ -232,3 +232,19 @@ Admonitions、Collapse Panels、Option Groups、Marker、File Tree、Code Tree�
 ```
 
 路径相对当前 Markdown 文件解析，也可使用仓库根目录相对路径。行号从 1 开始且包含首尾行；区域由源文件中的 `#region name` 与 `#endregion` 标记界定。缺失文件、非法范围、未闭合区域、仓库外路径和递归包含都会保留原注释。代码围栏中的 include 注释不会展开。
+
+## 6.11 站内链接（`ama://`）
+
+Markdown 里的站内链接用 `ama://` 前缀声明，构建期会被改写为带站点 `base` 的路径，所以站点部署在子路径（例如 `https://example.com/blog`）时不会 404：
+
+```markdown
+[第二篇](ama://posts/second-blog/)
+[归档](ama://archive/)
+[某条动态](ama://moments/#2026-10-22)
+```
+
+- `ama:` 后可以写任意个斜杠（`ama:`、`ama:/`、`ama://` 等价），其余部分按站内路径拼接 `base`。
+- 只改写 `a[href]` 中以 `ama:` 开头的值；普通链接、图片、裸锚点（`#x`）和外部 URL 保持原文。
+- `#锚点` 与 `?查询` 原样保留；不给 `ama://` 写任何路径时退化为站点首页。
+- 只做字符串改写，不校验目标是否存在；路径写错仍然 404。
+- 直接写 `/posts/x/` 不会被补 `base`，需要站内语义时用本前缀。

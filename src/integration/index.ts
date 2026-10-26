@@ -323,6 +323,15 @@ export function shirones(options: ShironesOptions = {}): AstroIntegration {
 					"utils/markdown-processor.mjs",
 				);
 				const processor = markdownModule.siteMarkdownProcessor;
+				// Node 侧的这个模块实例读不到 Vite 的 `import.meta.env.BASE_URL`，
+				// 把配置里的 base 注给 `ama://` 站内链接改写；页面渲染走的 Vite 实例
+				// 会自己从 BASE_URL 取到同一个值。
+				const setInternalLinkBase = (
+					markdownModule as {
+						setInternalLinkBase?: (base?: string) => void;
+					}
+				).setInternalLinkBase;
+				setInternalLinkBase?.(siteConfig?.base ?? "/");
 
 				// ── 5. Bundled integrations ─────────────────────────────────────
 				const integrations =

@@ -25,3 +25,9 @@ export declare const siteMarkdownProcessor: {
 		shared?: Record<string, unknown>,
 	): Promise<SiteMarkdownRenderer>;
 };
+
+/**
+ * Node 上下文（integration 加载的同一份模块）没有 `import.meta.env.BASE_URL`，
+ * 由 integration 在配置阶段写入站点 base，供 `ama://` 站内链接改写使用。
+ */
+export declare function setInternalLinkBase(base: string | undefined): void;
